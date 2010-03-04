@@ -34,29 +34,26 @@
   "The timer object that calls `flowtimer-update' every minute.  Internal use only.")
 
 (defgroup flowtimer nil "Let Emacs nudge you in the direction of productivity."
-  :prefix 'flowtimer-)
+  :group 'tools)
 
 (defcustom flowtimer-timer-duration 48
   "How long (in minutes) you want a sprint to be.  Some random HN comment recommended 48 minutes, so that's the default."
-  :tag 'timer-duration
-  :group 'flowtimer
-  :type 'integer)
+  :type 'integer
+  :group 'flowtimer)
 
 (defcustom flowtimer-tick-interval 4
   "How frequently (in minutes) you want the remaining time to update.  The time is recalculated every minute or so; this variable only affects the display."
-  :tag 'tick-interval
-  :group 'flowtimer
-  :type 'integer)
+  :type 'integer
+  :group 'flowtimer)
 
 (defcustom flowtimer-stop-hook nil
   "Functions to run when the flowtimer expires."
-  :tag 'stop-hook
   :type 'hook
   :group 'flowtimer)
 
 (defcustom flowtimer-start-hook nil
   "Functions to run when the flowtimer is started."
-  :tag 'start-hook
+  :options '(flowtimer-disable-rcirc-tracking)
   :type 'hook
   :group 'flowtimer)
 
@@ -117,6 +114,23 @@ Customize `flowtimer-timer-duration' to control its duration.  With prefix arg P
   (run-hooks 'flowtimer-start-hook)
   (setf flowtimer--timer
         (run-at-time 0 60 #'flowtimer-update)))
+
+
+;; useful hooks
+
+(defun flowtimer-enable-rcirc-tracking ()
+  "Re-enable rcirc tracking.
+This is automatically added to your stop hook when
+`flowtimer-enable-rcirc-tracking' is run by the start hook, so
+you don't need to even know it exists."
+  (rcirc-track-minor-mode t))
+
+(defun flowtimer-disable-rcirc-tracking ()
+  "Disable rcirc notification while the flowtimer is on."
+  (when (not (memq 'flowtimer-enable-rcirc-tracking flowtimer-stop-hook))
+    (setq flowtimer-stop-hook
+          (cons 'flowtimer-enable-rcirc-tracking flowtimer-stop-hook)))
+  (rcirc-track-minor-mode -1))
 
 (provide 'flowtimer)
 ;;; flowtimer.el ends here
